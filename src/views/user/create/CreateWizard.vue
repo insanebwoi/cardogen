@@ -73,7 +73,7 @@ async function handleSubmit() {
   try {
     submitting.value = true
     const inv = await invitationStore.createInvitation(formData.value, authStore.user.uid)
-    toast.success('<Icon name="PartyPopper" size="18" /> Invitation created!')
+    toast.success('🎉 Invitation created!')
     router.push({ name: 'InvitationDetails', params: { id: inv.id } })
   } catch (err) { toast.error('Failed: ' + err.message) }
   finally { submitting.value = false }

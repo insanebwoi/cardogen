@@ -73,7 +73,10 @@ export const useTemplateStore = defineStore('template', () => {
         name: data.name,
         slug: data.slug,
         category: data.category,
-        componentName: data.componentName,
+        componentName: data.componentName || '',
+        html: data.html || '',
+        css: data.css || '',
+        theme: data.theme || 'gold',
         thumbnailColor: data.thumbnailColor || '#f43f5e',
         isActive: data.isActive ?? true,
         createdAt: serverTimestamp()
@@ -95,7 +98,9 @@ export const useTemplateStore = defineStore('template', () => {
       const templateRef = doc(db, 'templates', id)
       const updates = {
         name: data.name, slug: data.slug, category: data.category,
-        componentName: data.componentName, isActive: data.isActive
+        componentName: data.componentName || '',
+        html: data.html || '', css: data.css || '', theme: data.theme || 'gold',
+        isActive: data.isActive
       }
       await updateDoc(templateRef, updates)
       const index = templates.value.findIndex((t) => t.id === id)

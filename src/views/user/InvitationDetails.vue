@@ -18,7 +18,8 @@
         <div class="det-link-box">
           <input :value="shareLink" readonly class="det-link-input" />
           <button @click="copyLink" class="btn btn-sm" style="background: var(--gray-800); color: white; white-space: nowrap;">
-            {{ copied ? '<Icon name="CheckCircle2" size="16" /> Copied!' : '<Icon name="ClipboardList" size="18" /> Copy' }}
+            <Icon :name="copied ? 'CheckCircle2' : 'ClipboardList'" size="16" />
+            {{ copied ? 'Copied!' : 'Copy' }}
           </button>
         </div>
       </div>
@@ -46,7 +47,7 @@
             <tr v-for="r in rsvps" :key="r.id">
               <td><strong>{{ r.guestName }}</strong></td>
               <td>{{ r.guestPhone || '—' }}</td>
-              <td><span :class="r.attending ? 'badge badge-success' : 'badge badge-danger'">{{ r.attending ? '<Icon name="CheckCircle2" size="16" /> Yes' : '<Icon name="XCircle" size="16" /> No' }}</span></td>
+              <td><span :class="r.attending ? 'badge badge-success' : 'badge badge-danger'"><Icon :name="r.attending ? 'CheckCircle2' : 'XCircle'" size="14" /> {{ r.attending ? 'Yes' : 'No' }}</span></td>
               <td>{{ r.guestCount || 1 }}</td>
               <td style="max-width: 200px;">{{ r.wishesMessage || '—' }}</td>
               <td class="date-cell">{{ formatTimestamp(r.respondedAt) }}</td>

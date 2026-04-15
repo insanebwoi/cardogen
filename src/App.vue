@@ -1,7 +1,6 @@
 <template>
   <div v-if="loading" class="app-loader">
     <div class="spinner"></div>
-    <p style="margin-top: 16px; color: var(--gray-500);">Loading Cardogen...</p>
   </div>
   <component v-else :is="currentLayout">
     <RouterView v-slot="{ Component, route }">

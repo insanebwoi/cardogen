@@ -54,7 +54,7 @@
                 <div style="display: flex; gap: 6px;">
                   <a :href="`/w/${inv.shortCode}`" target="_blank" class="btn btn-ghost btn-sm" title="View Card"><Icon name="Eye" size="16" /></a>
                   <button @click="toggleStatus(inv)" class="btn btn-ghost btn-sm" :title="inv.isActive ? 'Deactivate' : 'Activate'">
-                    {{ inv.isActive ? '<Icon name="Lock" size="16" />' : '<Icon name="Unlock" size="16" />' }}
+                    <Icon :name="inv.isActive ? 'Lock' : 'Unlock'" size="16" />
                   </button>
                   <button @click="handleDelete(inv.id)" class="btn btn-ghost btn-sm" style="color: #ef4444;" title="Delete"><Icon name="Trash2" size="16" /></button>
                 </div>

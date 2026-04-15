@@ -20,9 +20,11 @@ import { computed } from 'vue'
 const props = defineProps(['formData'])
 
 const templateNames = {
-  'royal-gold': '<Icon name="Crown" size="24" /> Royal Gold', 'floral-dream': '<Icon name="Sparkles" size="18" /> Floral Dream',
-  'minimal-white': '<Icon name="Sparkles" size="16" /> Minimal White', 'traditional-classic': '<Icon name="MoonStar" size="16" /> Traditional Classic',
-  'modern-love': '<Icon name="Heart" size="16" /> Modern Love'
+  'royal-gold': 'Royal Gold',
+  'floral-dream': 'Floral Dream',
+  'minimal-white': 'Minimal White',
+  'traditional-classic': 'Traditional Classic',
+  'modern-love': 'Modern Love'
 }
 const templateName = computed(() => templateNames[props.formData.templateId] || props.formData.templateId)
 function formatDate(d) { if (!d) return ''; return new Date(d).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }

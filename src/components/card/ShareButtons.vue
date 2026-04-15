@@ -3,7 +3,10 @@
     <p class="share-label">Share this invitation</p>
     <div class="share-row">
       <button @click="shareWhatsApp" class="share-btn whatsapp"><Icon name="Smartphone" size="18" /> WhatsApp</button>
-      <button @click="copyLink" class="share-btn copy">{{ copied ? '<Icon name="CheckCircle2" size="16" /> Copied!' : '<Icon name="Link" size="16" /> Copy Link' }}</button>
+      <button @click="copyLink" class="share-btn copy">
+        <Icon :name="copied ? 'CheckCircle2' : 'Link'" size="16" />
+        {{ copied ? 'Copied!' : 'Copy Link' }}
+      </button>
       <button v-if="canShare" @click="nativeShare" class="share-btn native">📤 Share</button>
     </div>
   </div>
@@ -15,7 +18,7 @@ const props = defineProps({ shortCode: String, brideName: String, groomName: Str
 const copied = ref(false)
 const baseUrl = window.location.origin
 const link = computed(() => `${baseUrl}/w/${props.shortCode}`)
-const message = computed(() => `<Icon name="Heart" size="18" /> You're invited to the wedding of ${props.brideName} & ${props.groomName}! 🎊\n\nView invitation & RSVP:\n${link.value}`)
+const message = computed(() => `💍 You're invited to the wedding of ${props.brideName} & ${props.groomName}! 🎊\n\nView invitation & RSVP:\n${link.value}`)
 const canShare = computed(() => !!navigator.share)
 
 function shareWhatsApp() { window.open(`https://wa.me/?text=${encodeURIComponent(message.value)}`, '_blank') }

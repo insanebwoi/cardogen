@@ -56,7 +56,8 @@
             <td class="email-cell">{{ u.email }}</td>
             <td>
               <span :class="u.role === 'admin' ? 'badge badge-warning' : 'badge badge-info'">
-                {{ u.role === 'admin' ? '<Icon name="Shield" size="16" /> Admin' : '<Icon name="User" size="16" /> User' }}
+                <Icon :name="u.role === 'admin' ? 'Shield' : 'User'" size="14" />
+                {{ u.role === 'admin' ? 'Admin' : 'User' }}
               </span>
             </td>
             <td class="date-cell">{{ formatTimestamp(u.createdAt) }}</td>

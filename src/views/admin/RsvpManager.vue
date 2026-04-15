@@ -63,7 +63,8 @@
               <td>{{ r.guestPhone || '—' }}</td>
               <td>
                 <span :class="r.attending ? 'badge badge-success' : 'badge badge-danger'">
-                  {{ r.attending ? '<Icon name="CheckCircle2" size="16" /> Attending' : '<Icon name="XCircle" size="16" /> Declined' }}
+                  <Icon :name="r.attending ? 'CheckCircle2' : 'XCircle'" size="14" />
+                  {{ r.attending ? 'Attending' : 'Declined' }}
                 </span>
               </td>
               <td>{{ r.guestCount || 1 }}</td>
