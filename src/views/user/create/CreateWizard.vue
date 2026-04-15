@@ -11,7 +11,7 @@
         <button v-if="currentStep > 0" @click="currentStep--" class="btn btn-secondary">← Previous</button>
         <div v-else></div>
         <button v-if="currentStep < steps.length - 1" @click="nextStep" :disabled="!isStepValid" class="btn btn-primary">Next →</button>
-        <button v-else @click="handleSubmit" :disabled="submitting" class="btn btn-success" style="display:flex; align-items:center; gap:8px;">
+        <button v-else @click="handleSubmit" :disabled="submitting || !isStepValid" class="btn btn-success" style="display:flex; align-items:center; gap:8px;">
           <Icon v-if="!submitting" name="PartyPopper" size="18" />
           {{ submitting ? 'Creating...' : 'Generate Invitation' }}
         </button>
@@ -32,6 +32,7 @@ import StepDateTime from './StepDateTime.vue'
 import StepVenue from './StepVenue.vue'
 import StepMessage from './StepMessage.vue'
 import StepTemplate from './StepTemplate.vue'
+import StepSlug from './StepSlug.vue'
 import StepPreview from './StepPreview.vue'
 
 const router = useRouter()
@@ -44,13 +45,15 @@ const submitting = ref(false)
 const steps = [
   { label: 'Names', icon: 'Heart' }, { label: 'Date', icon: 'Calendar' },
   { label: 'Venue', icon: 'MapPin' }, { label: 'Message', icon: 'Mail' },
-  { label: 'Template', icon: 'Palette' }, { label: 'Preview', icon: 'Eye' }
+  { label: 'Template', icon: 'Palette' }, { label: 'Link', icon: 'Link' },
+  { label: 'Preview', icon: 'Eye' }
 ]
-const stepComponents = [StepNames, StepDateTime, StepVenue, StepMessage, StepTemplate, StepPreview]
+const stepComponents = [StepNames, StepDateTime, StepVenue, StepMessage, StepTemplate, StepSlug, StepPreview]
 
 const formData = ref({
   brideName: '', groomName: '', weddingDate: '', weddingTime: '',
-  venueName: '', venueAddress: '', venueMapUrl: '', customMessage: '', templateId: null
+  venueName: '', venueAddress: '', venueMapUrl: '', customMessage: '', templateId: null,
+  customSlug: '', customSlugValid: true
 })
 
 const isStepValid = computed(() => {
@@ -61,7 +64,8 @@ const isStepValid = computed(() => {
     case 2: return d.venueName.trim()
     case 3: return true
     case 4: return d.templateId !== null
-    case 5: return true
+    case 5: return d.customSlugValid !== false // slug step: valid if empty or availability confirmed
+    case 6: return d.customSlugValid !== false // preview step: also checks slug
     default: return false
   }
 })

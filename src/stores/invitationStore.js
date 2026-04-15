@@ -18,7 +18,8 @@ export const useInvitationStore = defineStore('invitation', () => {
     try {
       loading.value = true
       error.value = null
-      const shortCode = nanoid(8)
+      // Use custom slug if provided and valid, otherwise generate a random one
+      const shortCode = data.customSlug && data.customSlug.trim() ? data.customSlug.trim() : nanoid(8)
 
       const invitation = {
         userId,
