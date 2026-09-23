@@ -13,14 +13,11 @@
         </span>
 
         <h1 class="hero-headline">
-          Wedding invitations,<br />
-          <em>reimagined for the phone.</em>
+          {{ HERO.headlineLead }}<br />
+          <em>{{ HERO.headlineEm }}</em>
         </h1>
 
-        <p class="hero-sub">
-          Design a beautiful invite in minutes. Share one link.
-          Collect RSVPs automatically. That's it.
-        </p>
+        <p class="hero-sub">{{ HERO.sub }}</p>
 
         <div class="hero-cta">
           <RouterLink to="/login" class="btn-primary">
@@ -88,11 +85,38 @@
       </ol>
     </section>
 
+    <!-- FAQ — visible on the page, and mirrored into FAQPage structured data. -->
+    <section class="faq" id="faq" aria-labelledby="faq-heading">
+      <div class="section-head">
+        <span class="section-kicker">FAQ</span>
+        <h2 id="faq-heading">Questions, answered.</h2>
+      </div>
+
+      <ul class="faq-list">
+        <li v-for="(f, i) in FAQS" :key="f.q" class="faq-item" :class="{ open: openFaq === i }">
+          <h3 class="faq-q-wrap">
+            <button
+              class="faq-q"
+              :aria-expanded="openFaq === i"
+              :aria-controls="`faq-a-${i}`"
+              @click="toggleFaq(i)"
+            >
+              <span>{{ f.q }}</span>
+              <Icon name="ChevronDown" size="18" class="faq-chevron" />
+            </button>
+          </h3>
+          <div :id="`faq-a-${i}`" class="faq-a" role="region">
+            <p>{{ f.a }}</p>
+          </div>
+        </li>
+      </ul>
+    </section>
+
     <!-- CTA -->
     <section class="cta">
       <div class="cta-card">
-        <h2>Your invitation is 5 minutes away.</h2>
-        <p>Beautifully designed. Instantly shareable. Always free.</p>
+        <h2>{{ CTA.heading }}</h2>
+        <p>{{ CTA.sub }}</p>
         <RouterLink to="/login" class="btn-primary">
           Get started
           <Icon name="ArrowRight" size="16" />
@@ -103,20 +127,14 @@
 </template>
 
 <script setup>
-const features = [
-  { icon: 'Palette',        title: 'Designer templates',   desc: 'A curated set of typographic, editorial templates — not the usual clipart.' },
-  { icon: 'Link',           title: 'One short link',       desc: 'A single tappable link for WhatsApp, iMessage, or anywhere else.' },
-  { icon: 'Clock',          title: 'Live countdown',       desc: 'Tasteful countdown on every card. Builds anticipation automatically.' },
-  { icon: 'ClipboardList',  title: 'RSVPs that just work', desc: 'Guests respond in one tap. You see everything in a clean dashboard.' },
-  { icon: 'Smartphone',     title: 'Phone-first',          desc: 'Designed from the mobile view out. Looks sharp on anything bigger.' },
-  { icon: 'Code',           title: 'Custom templates',     desc: 'Admins can write HTML/CSS templates with a live preview editor.' }
-]
+import { ref } from 'vue'
+// Shared with the build-time static renderer so the crawlable HTML in
+// dist/index.html can never drift from what this component shows.
+import { HERO, FEATURES as features, STEPS as steps, FAQS, CTA } from '@/seo/content'
 
-const steps = [
-  { title: 'Fill in the details',   desc: 'Names, date, venue, a message. Under a minute.' },
-  { title: 'Pick a template',        desc: 'Preview live on mobile and desktop. Switch anytime.' },
-  { title: 'Share & track',          desc: 'Send the link. Watch RSVPs arrive in real time.' }
-]
+// First answer open: the page should show an answer, not a wall of closed rows.
+const openFaq = ref(0)
+function toggleFaq(i) { openFaq.value = openFaq.value === i ? -1 : i }
 </script>
 
 <style scoped>
@@ -356,6 +374,57 @@ const steps = [
   color: #0a0a0a; margin-bottom: 10px;
 }
 .cta-card p { color: #525252; margin-bottom: 28px; font-size: 0.95rem; }
+
+/* ================ FAQ ================ */
+.faq { padding: 110px 20px; background: #fafaf9; }
+.faq-list {
+  max-width: 760px; margin: 48px auto 0;
+  list-style: none; padding: 0;
+  border-top: 1px solid rgba(10,10,10,0.08);
+}
+.faq-item { border-bottom: 1px solid rgba(10,10,10,0.08); }
+
+/* The heading carries the button so the question stays a real <h3> in the
+   outline — collapsing it into a bare button would hide it from the
+   document structure a crawler reads. */
+.faq-q-wrap { margin: 0; font-size: inherit; font-weight: inherit; }
+.faq-q {
+  width: 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 22px 4px;
+  background: none; border: none; cursor: pointer;
+  font-family: inherit; font-size: 1rem; font-weight: 600;
+  color: #0a0a0a; text-align: left;
+}
+.faq-q:hover { color: #f43f5e; }
+.faq-q:focus-visible { outline: 2px solid #f43f5e; outline-offset: 2px; border-radius: 6px; }
+.faq-chevron { flex: none; color: #737373; transition: transform 0.25s ease; }
+.faq-item.open .faq-chevron { transform: rotate(180deg); }
+
+/* Collapsed with a grid row rather than display:none — the text stays in the
+   DOM and in the accessibility tree, just clipped. */
+.faq-a {
+  display: grid; grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s ease;
+}
+.faq-item.open .faq-a { grid-template-rows: 1fr; }
+.faq-a > p {
+  overflow: hidden;
+  margin: 0; padding: 0 4px;
+  color: #525252; line-height: 1.65; font-size: 0.95rem;
+  max-width: 62ch;
+}
+.faq-item.open .faq-a > p { padding-bottom: 24px; }
+
+@media (max-width: 600px) {
+  .faq { padding: 80px 16px; }
+  .faq-q { font-size: 0.95rem; padding: 20px 2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faq-a { transition: none; }
+  .faq-chevron { transition: none; }
+}
 
 /* ================ RESPONSIVE ================ */
 @media (max-width: 900px) {

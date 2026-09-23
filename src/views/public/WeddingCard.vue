@@ -112,6 +112,7 @@ import { storeToRefs } from 'pinia'
 import { useInvitationStore } from '@/stores/invitationStore'
 import TemplateRenderer from '@/components/templates/TemplateRenderer.vue'
 import { useInvitationAudio } from '@/composables/useInvitationAudio'
+import { applySeo } from '@/seo/useSeo'
 
 const route = useRoute()
 const origin = typeof window !== 'undefined' ? window.location.origin : 'cardogen.app'
@@ -185,6 +186,34 @@ function unfold() {
   })
 }
 
+/**
+ * An invitation is private, so it stays out of the index — but the link is
+ * pasted into WhatsApp and iMessage constantly, and those unfurlers read the
+ * same og: tags a crawler would. Getting the couple's names into the preview
+ * is the whole point.
+ */
+function applyCardSeo(inv) {
+  const couple = `${inv.brideName} & ${inv.groomName}`
+  const when = formatCardDate(inv.weddingDate)
+  applySeo({
+    title: `${couple} — Wedding Invitation`,
+    description: when
+      ? `You're invited to the wedding of ${couple} on ${when}. Tap to open the invitation and RSVP.`
+      : `You're invited to the wedding of ${couple}. Tap to open the invitation and RSVP.`,
+    path: `/w/${route.params.shortCode}`,
+    index: false,
+    type: 'article'
+  })
+}
+
+function formatCardDate(value) {
+  if (!value) return ''
+  // Firestore Timestamp, ISO string and Date all turn up here.
+  const d = typeof value?.toDate === 'function' ? value.toDate() : new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
 onMounted(() => {
   dataReady = load()
 })
@@ -193,7 +222,7 @@ async function load() {
   try {
     await invitationStore.fetchByShortCode(route.params.shortCode)
     if (!invitation.value) return
-    document.title = `${invitation.value.brideName} & ${invitation.value.groomName} — Wedding Invitation`
+    applyCardSeo(invitation.value)
 
     const inv = invitation.value
     if (isLive.value && inv.musicEnabled && inv.musicUrl) {

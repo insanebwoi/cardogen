@@ -3,29 +3,41 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="description" content="Cardogen — Create beautiful digital wedding invitations, share via WhatsApp, and track RSVPs. Free forever." />
+
+    <!-- Tags marked data-seo are the page-level ones: applySeo() clears and
+         rewrites them on every route change. The values here are the
+         home-page defaults, so a crawler that never runs JS still gets a
+         correct, fully described document. -->
+    <title>Free Online Wedding Invitation Cards — Cardogen</title>
+    <meta data-seo name="description" content="Create a free online wedding invitation card in minutes. Pick a designer template, share one WhatsApp link, and track RSVPs in a live dashboard. No credit card, free forever." />
+    <meta data-seo name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+
+    <meta data-seo property="og:site_name" content="Cardogen" />
+    <meta data-seo property="og:title" content="Free Online Wedding Invitation Cards — Cardogen" />
+    <meta data-seo property="og:description" content="Design a beautiful wedding invite in minutes. Share one link. Collect RSVPs automatically. Free forever." />
+    <meta data-seo property="og:type" content="website" />
+    <meta data-seo property="og:locale" content="en_IN" />
+    <meta data-seo property="og:image" content="/og-image.png" />
+    <meta data-seo name="twitter:card" content="summary_large_image" />
+    <meta data-seo name="twitter:title" content="Free Online Wedding Invitation Cards — Cardogen" />
+    <meta data-seo name="twitter:description" content="Design a beautiful wedding invite in minutes. Share one link. Collect RSVPs automatically. Free forever." />
+    <meta data-seo name="twitter:image" content="/og-image.png" />
+
     <meta name="theme-color" content="#f43f5e" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta property="og:title" content="Cardogen — Digital Wedding Invitations" />
-    <meta property="og:description" content="Create stunning wedding cards, share instantly, collect RSVPs." />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="/og-image.png" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Cardogen — Digital Wedding Invitations" />
-    <meta name="twitter:description" content="Create stunning wedding cards, share instantly, collect RSVPs." />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💍</text></svg>" />
+
+    <!-- Third-party origins the first paint depends on. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <title>Cardogen — Digital Wedding Invitations</title>
   </head>
   <body>
-    <noscript>
-      <div style="text-align: center; padding: 60px 20px; font-family: system-ui;">
-        <h1>💍 Cardogen</h1>
-        <p style="margin-top: 12px;">Please enable JavaScript to use this application.</p>
-      </div>
-    </noscript>
+    <!-- Built output injects the landing copy here; Vue clears it on mount. -->
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
