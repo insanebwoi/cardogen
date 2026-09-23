@@ -1,5 +1,60 @@
 <template>
-  <div v-if="loading" class="card-loading" :class="`theme-${loaderTheme}`">
+  <!-- Branded status screens: a dead or switched-off link still looks like Cardogen. -->
+  <div v-if="notFound || revoked" class="status-page">
+    <div class="status-bg" aria-hidden="true">
+      <span class="sb-blob sb-blob-a"></span>
+      <span class="sb-blob sb-blob-b"></span>
+    </div>
+
+    <RouterLink to="/" class="status-brand">
+      <span class="sb-mark"><Icon name="Heart" size="16" /></span>
+      <span class="sb-word">Cardogen</span>
+    </RouterLink>
+
+    <div class="status-card">
+      <span class="status-icon" :class="revoked ? 'is-revoked' : 'is-missing'">
+        <Icon :name="revoked ? 'Lock' : 'HeartCrack'" size="26" />
+      </span>
+
+      <template v-if="revoked">
+        <h1 class="status-title">This invitation is no longer available</h1>
+        <p class="status-names">{{ invitation.brideName }} &amp; {{ invitation.groomName }}</p>
+        <p class="status-text">
+          The couple have turned this card off, so it can't be opened right now.
+          If you think that's a mistake, please reach out to them — they can switch it back on any time.
+        </p>
+      </template>
+
+      <template v-else>
+        <h1 class="status-title">Invitation not found</h1>
+        <p class="status-text">
+          This link doesn't match any invitation. Check that it was copied in full —
+          links look like <code class="status-code">{{ origin }}/w/your-link</code>
+        </p>
+      </template>
+
+      <div class="status-actions">
+        <RouterLink to="/" class="btn btn-primary btn-sm">
+          <Icon name="Sparkles" size="16" />
+          Create your own invitation
+        </RouterLink>
+        <RouterLink to="/" class="status-link">Go to Cardogen home</RouterLink>
+      </div>
+    </div>
+
+    <p class="status-foot">Free digital wedding invitations · Share one link · Collect RSVPs</p>
+  </div>
+
+  <!-- Sealed until the guest asks for it, then the envelope unfolds. -->
+  <div
+    v-else-if="phase !== 'done'"
+    class="card-loading"
+    :class="[`theme-${loaderTheme}`, phase]"
+    :role="phase === 'sealed' ? 'button' : null"
+    :tabindex="phase === 'sealed' ? 0 : null"
+    @click="unfold"
+    @keydown.enter.space.prevent="unfold"
+  >
     <div class="envelope" aria-hidden="true">
       <div class="env-body"></div>
       <div class="env-flap-back"></div>
@@ -12,35 +67,83 @@
       <div class="env-flap"></div>
       <div class="env-seal"><Icon name="Heart" size="14" /></div>
     </div>
-    <p class="loading-text">Unfolding your invitation</p>
+
+    <p class="loading-text">{{ phase === 'sealed' ? 'You have an invitation waiting' : loadingText }}</p>
+
+    <button v-if="phase === 'sealed'" type="button" class="unfold-btn" @click.stop="unfold">
+      <Icon name="MailOpen" size="18" />
+      Click here to unfold the card
+    </button>
+
+    <p class="gate-credit">Powered by <strong>Cardogen</strong></p>
+
+    <div
+      v-if="phase === 'unfolding' && music.downloading.value"
+      class="music-progress"
+      :class="{ indeterminate: music.streaming.value && !music.progress.value }"
+      aria-hidden="true"
+    >
+      <span class="mp-fill" :style="{ width: Math.round(music.progress.value * 100) + '%' }"></span>
+    </div>
   </div>
-  <div v-else-if="!invitation" class="card-not-found">
-    <span><Icon name="HeartCrack" size="32" /></span>
-    <h2>Invitation Not Found</h2>
-    <p>This invitation may have been removed or is no longer active.</p>
-  </div>
+
   <div v-else class="wedding-card-page">
     <TemplateRenderer :templateId="invitation.templateId" :invitation="invitation" />
+
+    <button
+      v-if="hasMusic"
+      class="music-fab"
+      data-music-control
+      :class="{ paused: !music.playing.value }"
+      @click="music.toggle()"
+      :title="music.playing.value ? `Turn off ${invitation.musicName || 'music'}` : `Turn on ${invitation.musicName || 'music'}`"
+      :aria-label="music.playing.value ? 'Turn music off' : 'Turn music on'"
+    >
+      <Icon :name="music.playing.value ? 'Volume2' : 'VolumeX'" size="18" />
+      <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+    </button>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, watch, onMounted, onBeforeUnmount, ref } from 'vue'
+import { useRoute, RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useInvitationStore } from '@/stores/invitationStore'
 import TemplateRenderer from '@/components/templates/TemplateRenderer.vue'
+import { useInvitationAudio } from '@/composables/useInvitationAudio'
 
 const route = useRoute()
+const origin = typeof window !== 'undefined' ? window.location.origin : 'cardogen.app'
 const invitationStore = useInvitationStore()
-const { currentInvitation: invitation, loading } = storeToRefs(invitationStore)
+const { currentInvitation: invitation } = storeToRefs(invitationStore)
+
+const music = useInvitationAudio()
+const loading = ref(true)
+
+// 'sealed' → waiting for the guest's click · 'unfolding' → animation + loading · 'done' → the card
+const phase = ref('sealed')
+let dataReady = null
+// Treat a missing isActive as live — only an explicit false revokes a card.
+const isLive = computed(() => !!invitation.value && invitation.value.isActive !== false)
+const hasMusic = computed(() => !!(
+  isLive.value && invitation.value?.musicEnabled &&
+  invitation.value?.musicUrl && !music.failed.value))
+// Errors only make sense once the lookup has finished.
+const notFound = computed(() => !loading.value && !invitation.value)
+const revoked = computed(() => !loading.value && !!invitation.value && !isLive.value)
+const loadingText = computed(() =>
+  music.downloading.value
+    ? `Loading ${invitation.value?.musicName || 'your song'}…`
+    : 'Unfolding your invitation')
 
 const TEMPLATE_THEME = {
   'royal-gold': 'gold',
   'floral-dream': 'pink',
   'minimal-white': 'minimal',
   'traditional-classic': 'green',
-  'modern-love': 'purple'
+  'modern-love': 'purple',
+  'ios-glass': 'glass'
 }
 
 const loaderTheme = computed(() => {
@@ -49,16 +152,66 @@ const loaderTheme = computed(() => {
   return TEMPLATE_THEME[id] || invitation.value?.theme || 'pink'
 })
 
-onMounted(async () => {
-  await invitationStore.fetchByShortCode(route.params.shortCode)
-  if (invitation.value) {
-    document.title = `${invitation.value.brideName} & ${invitation.value.groomName} — Wedding Invitation`
-  }
+const THEME_CLASSES = ['pink', 'gold', 'minimal', 'green', 'purple'].map((t) => `card-theme-${t}`)
+
+/**
+ * The guest is looking at the couple's template, so the chrome around it —
+ * toasts, buttons — follows that palette instead of the Cardogen rose.
+ * Set on <body> because toasts render outside this component.
+ */
+function applyTheme(theme) {
+  document.body.classList.remove(...THEME_CLASSES)
+  if (theme) document.body.classList.add(`card-theme-${theme}`)
+}
+
+watch(loaderTheme, applyTheme, { immediate: true })
+onBeforeUnmount(() => document.body.classList.remove(...THEME_CLASSES))
+
+/**
+ * The click is what lets the audio play, so start() runs inside the handler.
+ * The envelope animates for at least a beat even if everything is cached.
+ */
+function unfold() {
+  if (phase.value !== 'sealed') return
+  phase.value = 'unfolding'
+  if (hasMusic.value) music.start()
+
+  const startedAt = Date.now()
+  Promise.resolve(dataReady).then(() => {
+    // Music that was still downloading when the guest clicked starts now.
+    if (hasMusic.value && !music.playing.value) music.start()
+    const remaining = Math.max(0, 2600 - (Date.now() - startedAt))
+    setTimeout(() => { phase.value = 'done' }, remaining)
+  })
+}
+
+onMounted(() => {
+  dataReady = load()
 })
+
+async function load() {
+  try {
+    await invitationStore.fetchByShortCode(route.params.shortCode)
+    if (!invitation.value) return
+    document.title = `${invitation.value.brideName} & ${invitation.value.groomName} — Wedding Invitation`
+
+    const inv = invitation.value
+    if (isLive.value && inv.musicEnabled && inv.musicUrl) {
+      await music.prepare(inv.musicUrl, {
+        start: inv.musicStart || 0,
+        end: inv.musicEnd || 0,
+        loop: inv.musicLoop !== false
+      })
+    }
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <style scoped>
 .card-loading, .card-not-found {
+  position: relative;
   min-height: 100vh; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   background: radial-gradient(ellipse at center, var(--ld-bg-0) 0%, var(--ld-bg-1) 55%, var(--ld-bg-2) 100%);
@@ -125,6 +278,21 @@ onMounted(async () => {
   --ld-shadow: rgba(0, 0, 0, 0.5);
   --ld-shadow-soft: rgba(110, 231, 183, 0.2);
   --ld-text: #a7f3d0;
+}
+.card-loading.theme-glass {
+  --ld-bg-0: #131a2c; --ld-bg-1: #0b0f1c; --ld-bg-2: #06070c;
+  --ld-body: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
+  --ld-body-wall: rgba(255,255,255,0.07);
+  --ld-flap-back: rgba(255,255,255,0.09);
+  --ld-flap: linear-gradient(135deg, rgba(61,139,255,0.55), rgba(122,92,255,0.5));
+  --ld-letter: linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 100%);
+  --ld-line: linear-gradient(90deg, rgba(111,180,255,0.3), #6fb4ff, rgba(111,180,255,0.3));
+  --ld-heart: #6fb4ff;
+  --ld-seal: linear-gradient(135deg, #3d8bff, #7a5cff);
+  --ld-seal-shadow: rgba(80, 130, 255, 0.55);
+  --ld-shadow: rgba(0, 0, 0, 0.7);
+  --ld-shadow-soft: rgba(111, 180, 255, 0.16);
+  --ld-text: #a9c4ee;
 }
 .card-loading.theme-purple {
   --ld-bg-0: #1e1033; --ld-bg-1: #140a22; --ld-bg-2: #0f0a1a;
@@ -286,7 +454,193 @@ onMounted(async () => {
   .env-flap { transform: rotateX(-180deg); }
 }
 
-.card-not-found span { font-size: 4rem; }
+.gate-credit {
+  position: absolute; bottom: max(18px, env(safe-area-inset-bottom));
+  left: 0; right: 0;
+  font-size: 0.7rem; letter-spacing: 0.08em;
+  color: var(--ld-text); opacity: 0.45;
+}
+.gate-credit strong { font-weight: 700; }
+
+/* Sealed: the envelope waits, still and closed, until it is clicked. */
+.card-loading.sealed { cursor: pointer; padding: 40px 24px; text-align: center; }
+.card-loading.sealed .env-flap,
+.card-loading.sealed .env-letter,
+.card-loading.sealed .env-seal,
+.card-loading.sealed .lt-line,
+.card-loading.sealed .lt-heart,
+.card-loading.sealed .loading-text { animation: none; }
+.card-loading.sealed .envelope { animation: seal-float 4s ease-in-out infinite; }
+.card-loading.sealed .env-letter { transform: translateY(6px) scale(0.97); }
+.card-loading.sealed .loading-text { opacity: 0.85; }
+.card-loading.sealed:hover .env-flap { transform: rotateX(-24deg); }
+.card-loading.sealed .env-flap { transition: transform 0.5s ease; }
+
+@keyframes seal-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.unfold-btn {
+  margin-top: 26px;
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 14px 28px; border: none; border-radius: 99px; cursor: pointer;
+  background: var(--ld-seal); color: white;
+  font-size: 0.92rem; font-weight: 600; letter-spacing: 0.02em;
+  box-shadow: 0 10px 30px var(--ld-seal-shadow);
+  animation: unfold-pulse 2.4s ease-in-out infinite;
+  transition: transform 0.2s;
+}
+.unfold-btn:hover { transform: translateY(-2px); }
+
+@keyframes unfold-pulse {
+  0%, 100% { box-shadow: 0 10px 30px var(--ld-seal-shadow), 0 0 0 0 var(--ld-seal-shadow); }
+  50% { box-shadow: 0 10px 30px var(--ld-seal-shadow), 0 0 0 16px transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-loading.sealed .envelope, .unfold-btn { animation: none; }
+}
+
+.music-progress {
+  margin-top: 18px; width: 180px; height: 4px; border-radius: 99px;
+  background: var(--ld-shadow-soft); overflow: hidden;
+}
+.mp-fill {
+  display: block; height: 100%; border-radius: 99px;
+  background: var(--ld-seal); transition: width 0.2s ease;
+}
+
+/* A CORS-blocked host gives no byte counts — show motion, not a stuck 0%. */
+.music-progress.indeterminate .mp-fill {
+  width: 40% !important;
+  animation: mp-slide 1.1s ease-in-out infinite;
+}
+@keyframes mp-slide {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(260%); }
+}
+
+/* Floating music control on the open card */
+.music-fab {
+  position: fixed; right: 18px; bottom: 18px; z-index: 60;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 14px; border: none; border-radius: 99px; cursor: pointer;
+  background: rgba(20, 16, 28, 0.78); color: white;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, background 0.2s;
+}
+.music-fab:hover { transform: translateY(-2px); background: var(--brand-accent); }
+
+.eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
+.eq i { width: 2.5px; border-radius: 2px; background: currentColor; height: 40%; animation: eq-bounce 0.9s ease-in-out infinite; }
+.eq i:nth-child(2) { animation-delay: 0.15s; }
+.eq i:nth-child(3) { animation-delay: 0.3s; }
+.music-fab.paused .eq i { animation-play-state: paused; height: 25%; }
+
+@keyframes eq-bounce { 0%, 100% { height: 30%; } 50% { height: 100%; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .eq i { animation: none; }
+}
+
+/* ============ Branded status screens ============ */
+.status-page {
+  position: relative; min-height: 100vh; min-height: 100dvh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 22px; padding: 32px 20px max(32px, env(safe-area-inset-bottom));
+  background: linear-gradient(170deg, #fff8fa 0%, #fff 45%, #fff5f7 100%);
+  text-align: center; overflow: hidden;
+}
+.status-bg { position: absolute; inset: 0; pointer-events: none; }
+.sb-blob { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.5; }
+.sb-blob-a { width: 320px; height: 320px; top: -90px; left: -80px; background: var(--rose-200); }
+.sb-blob-b { width: 280px; height: 280px; bottom: -80px; right: -70px; background: var(--gold-200); }
+
+.status-brand { position: relative; display: inline-flex; align-items: center; gap: 9px; font-weight: 700; font-size: 1.15rem; }
+.sb-mark {
+  width: 30px; height: 30px; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--rose-500), var(--rose-700));
+  color: white; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
+}
+.sb-word {
+  background: linear-gradient(135deg, var(--rose-500), var(--rose-700));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.status-card {
+  position: relative; width: 100%; max-width: 440px;
+  background: rgba(255,255,255,0.86); backdrop-filter: blur(12px);
+  border: 1px solid var(--rose-100); border-radius: 22px;
+  padding: 34px 26px; box-shadow: var(--shadow-lg);
+}
+.status-icon {
+  width: 62px; height: 62px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-bottom: 18px;
+}
+.status-icon.is-revoked { background: var(--rose-50); color: var(--rose-600); }
+.status-icon.is-missing { background: var(--gray-100); color: var(--gray-500); }
+
+.status-title {
+  font-family: var(--font-display); font-weight: 600;
+  font-size: clamp(1.25rem, 5.2vw, 1.55rem); line-height: 1.3;
+  color: var(--gray-900);
+}
+.status-names {
+  margin-top: 10px; font-family: var(--font-script);
+  font-size: clamp(1.4rem, 6vw, 1.8rem); color: var(--rose-600);
+}
+.status-text {
+  margin-top: 12px; color: var(--gray-500);
+  font-size: 0.9rem; line-height: 1.65;
+}
+.status-code {
+  display: inline-block; margin-top: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem; color: var(--rose-700);
+  background: var(--rose-50); padding: 3px 8px; border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+
+.status-actions {
+  margin-top: 26px; display: flex; flex-direction: column;
+  align-items: center; gap: 12px;
+}
+.status-actions .btn { width: 100%; max-width: 280px; }
+.status-link { font-size: 0.82rem; color: var(--gray-500); text-decoration: underline; text-underline-offset: 3px; }
+.status-link:hover { color: var(--rose-600); }
+
+.status-foot {
+  position: relative; font-size: 0.75rem; color: var(--gray-400);
+  letter-spacing: 0.02em; max-width: 34ch;
+}
+
+@media (max-width: 420px) {
+  .status-card { padding: 28px 20px; border-radius: 18px; }
+  .sb-blob-a, .sb-blob-b { filter: blur(50px); }
+}
 .card-not-found h2 { margin-top: 16px; font-family: var(--font-display); color: var(--gray-800); }
+
+@media (max-width: 600px) {
+  .card-loading, .card-not-found { min-height: 100dvh; padding: 28px 20px; }
+  .envelope { width: 150px; height: 100px; }
+  .env-flap, .env-flap-back { width: 150px; }
+  .env-flap-back { border-width: 58px 75px 0 75px; }
+  .env-flap { height: 58px; }
+  .env-body::before { border-width: 0 0 100px 75px; }
+  .env-body::after { border-width: 0 75px 100px 0; }
+  .env-letter { height: 80px; padding: 12px 14px; }
+  .loading-text { margin-top: 30px; font-size: 0.92rem; }
+  .unfold-btn { margin-top: 22px; padding: 13px 22px; font-size: 0.86rem; }
+
+  .music-fab {
+    right: 14px;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    padding: 10px 12px;
+  }
+}
 .card-not-found p { color: var(--gray-500); margin-top: 8px; }
 </style>

@@ -64,4 +64,11 @@ async function handleLogin() {
 .google-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .login-error { color: #ef4444; font-size: 0.85rem; margin-top: 16px; }
 .login-footer { font-size: 0.75rem; color: var(--gray-400); margin-top: 24px; }
+
+@media (max-width: 480px) {
+  .login-page { padding: 16px; align-items: flex-start; padding-top: 12vh; }
+  .login-card { padding: 32px 22px; border-radius: 18px; }
+  .login-header h1 { font-size: 1.35rem; }
+  .login-header p { margin-bottom: 24px; }
+}
 </style>

@@ -28,7 +28,8 @@ const templates = [
   { id: 'floral-dream', name: 'Floral Dream', category: 'Romantic', icon: 'Sparkles', gradient: 'linear-gradient(135deg, #fff5f7, #fce7f3)' },
   { id: 'minimal-white', name: 'Minimal White', category: 'Modern', icon: 'Sparkles', gradient: 'linear-gradient(135deg, #fafaf9, #f5f5f4)' },
   { id: 'traditional-classic', name: 'Traditional', category: 'Classic', icon: 'MoonStar', gradient: 'linear-gradient(135deg, #064e3b, #047857)' },
-  { id: 'modern-love', name: 'Modern Love', category: 'Trendy', icon: 'Heart', gradient: 'linear-gradient(135deg, #0f0a1a, #1e1b4b)' }
+  { id: 'modern-love', name: 'Modern Love', category: 'Trendy', icon: 'Heart', gradient: 'linear-gradient(135deg, #0f0a1a, #1e1b4b)' },
+  { id: 'ios-glass', name: 'iOS Glass', category: 'Frosted', icon: 'Droplets', gradient: 'linear-gradient(135deg, #a5c8ff, #e5b8ff 55%, #ffc2d1)' }
 ]
 </script>
 

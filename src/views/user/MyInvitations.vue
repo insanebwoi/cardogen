@@ -27,6 +27,14 @@
   </div>
 </template>
 
+<style scoped>
+@media (max-width: 600px) {
+  .table-wrapper { border-radius: 14px; }
+  .table-wrapper :deep(td) { white-space: nowrap; }
+  .table-wrapper :deep(.btn-sm) { padding: 6px 10px; font-size: 0.75rem; }
+}
+</style>
+
 <script setup>
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'

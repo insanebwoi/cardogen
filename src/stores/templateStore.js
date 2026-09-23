@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+import { defineStore, acceptHMRUpdate } from 'pinia'
 import { ref } from 'vue'
 import {
   collection, addDoc, getDocs, updateDoc, deleteDoc,
@@ -125,3 +125,9 @@ export const useTemplateStore = defineStore('template', () => {
 
   return { templates, loading, error, fetchActiveTemplates, fetchAllTemplates, createTemplate, updateTemplate, deleteTemplate }
 })
+
+// Without this, editing the store leaves the already-created instance stale
+// and newly added actions appear undefined until a full page reload.
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useTemplateStore, import.meta.hot))
+}

@@ -97,6 +97,14 @@ onBeforeUnmount(() => { document.removeEventListener('click', handleClickOutside
 
 @media (max-width: 600px) {
   .hide-mobile { display: none; }
-  .main-content { padding: 24px 16px; }
+  .main-content { padding: 20px 16px max(24px, env(safe-area-inset-bottom)); }
+  .nav-inner { height: 56px; }
+  .nav-logo { font-size: 1.05rem; gap: 7px; }
+  .nav-links { gap: 10px; }
+  .app-footer { font-size: 0.75rem; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+}
+
+@media (max-width: 360px) {
+  .nav-logo .logo-text { display: none; }
 }
 </style>

@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+import { defineStore, acceptHMRUpdate } from 'pinia'
 import { ref, computed } from 'vue'
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
@@ -132,3 +132,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   return { user, userProfile, loading, error, isAuthenticated, isAdmin, initAuth, loginWithGoogle, logout }
 })
+
+// Without this, editing the store leaves the already-created instance stale
+// and newly added actions appear undefined until a full page reload.
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useAuthStore, import.meta.hot))
+}

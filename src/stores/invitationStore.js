@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+import { defineStore, acceptHMRUpdate } from 'pinia'
 import { ref } from 'vue'
 import {
   collection, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
@@ -33,6 +33,14 @@ export const useInvitationStore = defineStore('invitation', () => {
         venueMapUrl: data.venueMapUrl || '',
         customMessage: data.customMessage || '',
         templateId: data.templateId,
+        musicEnabled: !!(data.musicEnabled && data.musicUrl),
+        musicUrl: data.musicUrl || '',
+        musicName: data.musicName || '',
+        musicArtist: data.musicArtist || '',
+        musicSongId: data.musicSongId || '',
+        musicStart: Number(data.musicStart) || 0,
+        musicEnd: Number(data.musicEnd) || 0,
+        musicLoop: data.musicLoop !== false,
         isActive: true,
         viewCount: 0,
         createdAt: serverTimestamp()
@@ -110,20 +118,34 @@ export const useInvitationStore = defineStore('invitation', () => {
     try {
       loading.value = true
       error.value = null
-      const q = query(
-        collection(db, 'invitations'),
-        where('shortCode', '==', shortCode),
-        where('isActive', '==', true)
-      )
-      const snapshot = await getDocs(q)
+      let snapshot
+      try {
+        // Unfiltered so a revoked card can show "no longer available"
+        // instead of looking like a broken link.
+        snapshot = await getDocs(query(
+          collection(db, 'invitations'),
+          where('shortCode', '==', shortCode)
+        ))
+      } catch (permErr) {
+        // Security rules that gate reads on isActive reject the query above
+        // outright; fall back to the filtered form they do allow.
+        console.warn('Unfiltered shortCode lookup rejected, retrying active-only:', permErr)
+        snapshot = await getDocs(query(
+          collection(db, 'invitations'),
+          where('shortCode', '==', shortCode),
+          where('isActive', '==', true)
+        ))
+      }
       if (!snapshot.empty) {
         const d = snapshot.docs[0]
         currentInvitation.value = { id: d.id, ...d.data() }
-        // Increment view count
-        try {
-          await updateDoc(d.ref, { viewCount: (currentInvitation.value.viewCount || 0) + 1 })
-        } catch (updateErr) {
-          console.warn('Failed to update view count:', updateErr)
+        // Only count views of a live card
+        if (currentInvitation.value.isActive) {
+          try {
+            await updateDoc(d.ref, { viewCount: (currentInvitation.value.viewCount || 0) + 1 })
+          } catch (updateErr) {
+            console.warn('Failed to update view count:', updateErr)
+          }
         }
         return currentInvitation.value
       }
@@ -156,11 +178,47 @@ export const useInvitationStore = defineStore('invitation', () => {
     }
   }
 
+  /** Updates the song settings of an existing invitation. */
+  async function updateMusic(id, music) {
+    const payload = {
+      musicEnabled: !!(music.musicEnabled && music.musicUrl),
+      musicUrl: music.musicUrl || '',
+      musicName: music.musicName || '',
+      musicArtist: music.musicArtist || '',
+      musicSongId: music.musicSongId || '',
+      musicStart: Number(music.musicStart) || 0,
+      musicEnd: Number(music.musicEnd) || 0,
+      musicLoop: music.musicLoop !== false
+    }
+    await updateDoc(doc(db, 'invitations', id), payload)
+    if (currentInvitation.value?.id === id) {
+      currentInvitation.value = { ...currentInvitation.value, ...payload }
+    }
+    const idx = invitations.value.findIndex((inv) => inv.id === id)
+    if (idx !== -1) invitations.value[idx] = { ...invitations.value[idx], ...payload }
+    return payload
+  }
+
+  /** Switches which template (theme) an invitation renders with. */
+  async function updateTemplate(id, templateId) {
+    await updateDoc(doc(db, 'invitations', id), { templateId })
+    const sync = (list) => {
+      const i = list.findIndex((inv) => inv.id === id)
+      if (i !== -1) list[i] = { ...list[i], templateId }
+    }
+    sync(allInvitations.value)
+    sync(invitations.value)
+    if (currentInvitation.value?.id === id) currentInvitation.value.templateId = templateId
+  }
+
   async function toggleActive(id, isActive) {
     try {
       await updateDoc(doc(db, 'invitations', id), { isActive })
       const idx = allInvitations.value.findIndex((inv) => inv.id === id)
       if (idx !== -1) allInvitations.value[idx].isActive = isActive
+      const mine = invitations.value.findIndex((inv) => inv.id === id)
+      if (mine !== -1) invitations.value[mine].isActive = isActive
+      if (currentInvitation.value?.id === id) currentInvitation.value.isActive = isActive
     } catch (err) {
       error.value = err.message
       throw err
@@ -181,6 +239,12 @@ export const useInvitationStore = defineStore('invitation', () => {
   return {
     invitations, allInvitations, currentInvitation, loading, error,
     createInvitation, fetchMyInvitations, fetchAllInvitations,
-    fetchByShortCode, fetchById, toggleActive, deleteInvitation
+    fetchByShortCode, fetchById, toggleActive, deleteInvitation, updateMusic, updateTemplate
   }
 })
+
+// Without this, editing the store leaves the already-created instance stale
+// and newly added actions appear undefined until a full page reload.
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useInvitationStore, import.meta.hot))
+}

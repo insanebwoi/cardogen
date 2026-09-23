@@ -120,6 +120,35 @@ async function handleSubmit() {
 .rsvp-green .rsvp-success h3 { color: #ecfdf5; }
 .rsvp-green .rsvp-success p { color: #6ee7b7; }
 
+/* Vintage theme — ink on aged paper */
+.rsvp-vintage { background: rgba(255,251,240,0.6); border: 1px solid rgba(20,83,45,0.18); }
+.rsvp-vintage .rsvp-title { color: #14532d; font-family: var(--font-display); }
+.rsvp-vintage .rsvp-input { background: #fffdf6; color: #14532d; border-color: rgba(20,83,45,0.2); }
+.rsvp-vintage .rsvp-input::placeholder { color: rgba(20,83,45,0.35); }
+.rsvp-vintage .rsvp-opt { background: rgba(20,83,45,0.06); color: rgba(20,83,45,0.6); }
+.rsvp-vintage .rsvp-opt.active { background: #14532d; color: #fdf8e9; }
+.rsvp-vintage .rsvp-opt.active.decline { background: #9f1239; color: #fdf8e9; }
+.rsvp-vintage .rsvp-submit { background: linear-gradient(135deg, #14532d, #0f3d21); color: #f5e6c8; letter-spacing: 0.06em; }
+.rsvp-vintage .rsvp-success h3 { color: #14532d; }
+.rsvp-vintage .rsvp-success p { color: rgba(20,83,45,0.65); }
+
+/* Glass theme — frosted, iOS appearance */
+.rsvp-glass {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.rsvp-glass .rsvp-title { color: #f4f5f8; letter-spacing: -0.02em; }
+.rsvp-glass .rsvp-input { background: rgba(255,255,255,0.07); color: #f4f5f8; border-color: rgba(255,255,255,0.14); }
+.rsvp-glass .rsvp-input::placeholder { color: rgba(235,238,248,0.38); }
+.rsvp-glass .rsvp-opt { background: rgba(255,255,255,0.06); color: rgba(235,238,248,0.55); }
+.rsvp-glass .rsvp-opt.active { background: linear-gradient(140deg, #3d8bff, #7a5cff); color: white; }
+.rsvp-glass .rsvp-opt.active.decline { background: #ff375f; color: white; }
+.rsvp-glass .rsvp-submit { background: linear-gradient(140deg, #3d8bff, #7a5cff); color: white; letter-spacing: -0.01em; }
+.rsvp-glass .rsvp-success h3 { color: #f4f5f8; }
+.rsvp-glass .rsvp-success p { color: rgba(235,238,248,0.55); }
+
 /* Purple theme */
 .rsvp-purple { background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.15); }
 .rsvp-purple .rsvp-title { color: white; }

@@ -9,6 +9,10 @@
       <div class="ps-row"><span class="ps-label">Venue</span><span class="ps-value">{{ formData.venueName }}</span></div>
       <div v-if="formData.venueAddress" class="ps-row"><span class="ps-label">Address</span><span class="ps-value">{{ formData.venueAddress }}</span></div>
       <div v-if="formData.customMessage" class="ps-row"><span class="ps-label">Message</span><span class="ps-value">{{ formData.customMessage }}</span></div>
+      <div v-if="formData.musicEnabled && formData.musicUrl" class="ps-row">
+        <span class="ps-label">Music</span>
+        <span class="ps-value">{{ formData.musicName }}<template v-if="trimLabel"> <small class="ps-trim">{{ trimLabel }}</small></template></span>
+      </div>
       <div class="ps-row"><span class="ps-label">Template</span><span class="ps-value badge-tpl">{{ templateName }}</span></div>
       <div class="ps-row">
         <span class="ps-label">Link</span>
@@ -35,9 +39,17 @@ const templateNames = {
   'floral-dream': 'Floral Dream',
   'minimal-white': 'Minimal White',
   'traditional-classic': 'Traditional Classic',
-  'modern-love': 'Modern Love'
+  'modern-love': 'Modern Love',
+  'ios-glass': 'iOS Glass'
 }
 const templateName = computed(() => templateNames[props.formData.templateId] || props.formData.templateId)
+
+const trimLabel = computed(() => {
+  const { musicStart: a, musicEnd: b } = props.formData
+  if (!b) return ''
+  return `(${fmtSec(a || 0)}–${fmtSec(b)})`
+})
+function fmtSec(s) { return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}` }
 
 function formatDate(d) { if (!d) return ''; return new Date(d).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }
 </script>
@@ -52,6 +64,7 @@ function formatDate(d) { if (!d) return ''; return new Date(d).toLocaleDateStrin
 .ps-row + .ps-row { border-top: 1px solid var(--gray-100); }
 .ps-label { font-size: 0.8rem; color: var(--gray-500); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; min-width: 70px; }
 .ps-value { font-size: 0.9rem; color: var(--gray-800); text-align: right; word-break: break-word; }
+.ps-trim { color: var(--gray-400); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.76rem; }
 .badge-tpl { background: var(--rose-50); color: var(--rose-700); padding: 4px 12px; border-radius: 100px; font-size: 0.8rem; }
 .ps-link {
   display: inline-flex; align-items: center; gap: 6px;

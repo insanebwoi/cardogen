@@ -35,7 +35,7 @@
           <div class="mock mock-1">
             <div class="mock-dot"></div>
             <p class="mock-eyebrow">The wedding of</p>
-            <p class="mock-names">Ayesha <span>&</span> Rahil</p>
+            <p class="mock-names">Priya <span>&</span> Arjun</p>
             <div class="mock-line"></div>
             <p class="mock-meta">12 · 07 · 2026</p>
           </div>
@@ -48,7 +48,7 @@
           <div class="mock mock-3">
             <div class="mock-seal"><Icon name="Heart" size="12" /></div>
             <p class="mock-eyebrow">You're invited</p>
-            <p class="mock-names">Zara <span>&</span> Ali</p>
+            <p class="mock-names">Grace <span>&</span> Daniel</p>
             <div class="mock-line"></div>
             <p class="mock-meta">Garden Terrace</p>
           </div>

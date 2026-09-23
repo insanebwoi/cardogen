@@ -1,0 +1,57 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // User profiles — each user owns their own document; admins can read all.
+    match /users/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if Could not play that link: The element has no supported sources.signedIn() && request.auth.uid == userId;
+      allow update: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Invitations — publicly readable (guests open /w/:shortCode without an account).
+    match /invitations/{invitationId} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      // Anonymous guests may only bump the view counter; owners/admins may edit.
+      allow update: if
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount']) ||
+        (signedIn() && (resource.data.userId == request.auth.uid || isAdmin()));
+      allow delete: if signedIn() &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // RSVPs — guests submit without an account; only the couple/admins read them.
+    match /rsvps/{rsvpId} {
+      allow create: if true;
+      allow read, update, delete: if signedIn();
+    }
+
+    // Card templates — everyone reads, admins manage.
+    match /templates/{templateId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Shared song library for invitation music.
+    match /songs/{songId} {
+      allow read: if true;
+      allow create: if signedIn();
+      // Only the popularity counter can be changed after a song is added.
+      allow update: if signedIn() &&
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['useCount']) || isAdmin());
+      allow delete: if isAdmin();
+    }
+  }
+}

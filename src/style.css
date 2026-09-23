@@ -35,6 +35,82 @@
   --shadow-xl: 0 20px 60px rgba(0,0,0,0.15);
 }
 
+
+/* ============ CARD THEMES ============
+   A guest sees the couple's chosen template, so the interface on that page —
+   toasts, buttons, the music control — follows its palette instead of the
+   Cardogen rose. Set on <body> by the card page; everything falls back to
+   rose elsewhere. */
+:root {
+  --brand-accent: var(--rose-500);
+  --brand-accent-deep: var(--rose-700);
+  --brand-tint: var(--rose-50);
+  --brand-tint-strong: var(--rose-100);
+  --brand-border: var(--rose-100);
+  --brand-surface: var(--rose-50);
+  --brand-shadow: rgba(190, 18, 60, 0.28);
+}
+
+body.card-theme-pink {
+  --brand-accent: #ec4899;
+  --brand-accent-deep: #9d174d;
+  --brand-tint: #fdf2f8;
+  --brand-tint-strong: #fce7f3;
+  --brand-border: #fbcfe8;
+  --brand-surface: #fdf2f8;
+  --brand-shadow: rgba(157, 23, 77, 0.28);
+}
+
+body.card-theme-gold {
+  --brand-accent: #b8860b;
+  --brand-accent-deep: #7c4a03;
+  --brand-tint: #fef7e0;
+  --brand-tint-strong: #fdecc0;
+  --brand-border: #f0d99a;
+  --brand-surface: #fefaf0;
+  --brand-shadow: rgba(124, 74, 3, 0.3);
+}
+
+body.card-theme-minimal {
+  --brand-accent: #1c1917;
+  --brand-accent-deep: #0c0a09;
+  --brand-tint: #f5f5f4;
+  --brand-tint-strong: #e7e5e4;
+  --brand-border: #e7e5e4;
+  --brand-surface: #fafaf9;
+  --brand-shadow: rgba(28, 25, 23, 0.22);
+}
+
+body.card-theme-green {
+  --brand-accent: #047857;
+  --brand-accent-deep: #064e3b;
+  --brand-tint: #ecfdf5;
+  --brand-tint-strong: #d1fae5;
+  --brand-border: #a7f3d0;
+  --brand-surface: #f0fdf7;
+  --brand-shadow: rgba(6, 78, 59, 0.28);
+}
+
+body.card-theme-glass {
+  --brand-accent: #0a84ff;
+  --brand-accent-deep: #0040a0;
+  --brand-tint: #eef4ff;
+  --brand-tint-strong: #dbe7ff;
+  --brand-border: #cddcff;
+  --brand-surface: #f4f8ff;
+  --brand-shadow: rgba(10, 132, 255, 0.26);
+}
+
+body.card-theme-purple {
+  --brand-accent: #7c3aed;
+  --brand-accent-deep: #4c1d95;
+  --brand-tint: #f5f3ff;
+  --brand-tint-strong: #ede9fe;
+  --brand-border: #ddd6fe;
+  --brand-surface: #faf8ff;
+  --brand-shadow: rgba(76, 29, 149, 0.28);
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { scroll-behavior: smooth; }
@@ -53,7 +129,11 @@ button { cursor: pointer; border: none; outline: none; font-family: inherit; }
 input, select, textarea { font-family: inherit; outline: none; }
 
 /* ============ UTILITY CLASSES ============ */
-.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+.container {
+  max-width: 1200px; margin: 0 auto;
+  padding-left: max(18px, env(safe-area-inset-left));
+  padding-right: max(18px, env(safe-area-inset-right));
+}
 .text-center { text-align: center; }
 
 /* ============ BUTTONS ============ */
@@ -177,7 +257,7 @@ textarea.form-input { resize: vertical; min-height: 100px; }
 .stat-label { font-size: 0.8rem; color: var(--gray-500); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
 
 /* ============ TABLE ============ */
-.table-wrapper { overflow-x: auto; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.table-wrapper { max-width: 100%; overflow-x: auto; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
 table { width: 100%; border-collapse: collapse; background: white; }
 thead { background: var(--gray-50); }
 th { padding: 14px 20px; text-align: left; font-size: 0.75rem; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; }
@@ -239,5 +319,171 @@ tr:hover td { background: var(--gray-50); }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Toast overrides */
-.Vue-Toastification__toast { border-radius: var(--radius) !important; font-family: var(--font-body) !important; }
+/* ============ TOASTS ============
+   Cardogen-styled notifications: a white card with a coloured accent rail and
+   icon chip, instead of the library's flat green/red blocks. */
+/* Centred on screen rather than tucked in a corner. */
+.Vue-Toastification__container {
+  padding: 12px;
+  width: auto;
+  max-width: min(400px, calc(100vw - 28px));
+}
+.Vue-Toastification__container.top-center {
+  top: 50% !important;
+  bottom: auto !important;
+  left: 50% !important;
+  right: auto !important;
+  /* Both axes in one transform: translateY alone would drop the library's
+     own translateX(-50%) and shift the toast off-centre horizontally. */
+  transform: translate(-50%, -50%) !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.Vue-Toastification__toast {
+  position: relative;
+  min-height: 0 !important;
+  padding: 20px 22px !important;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 10px !important;
+  border-radius: 16px !important;
+  font-family: var(--font-body) !important;
+  font-size: 0.875rem !important;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--gray-800) !important;
+  background: linear-gradient(160deg, #ffffff 0%, var(--brand-surface) 100%) !important;
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--brand-border);
+  box-shadow:
+    0 18px 50px -12px var(--brand-shadow),
+    0 0 0 1px rgba(0, 0, 0, 0.03) !important;
+  overflow: hidden;
+}
+
+/* A coloured cap across the top carries the toast's meaning. */
+.Vue-Toastification__toast::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 4px;
+  background: var(--toast-accent, var(--brand-accent));
+}
+
+.Vue-Toastification__toast-body {
+  font-family: var(--font-body) !important;
+  overflow-wrap: anywhere;
+}
+
+/* Icon chip, tinted to match the rail. */
+.Vue-Toastification__icon {
+  width: 42px !important; height: 42px !important;
+  margin: 0 0 12px 0 !important;
+  padding: 9px;
+  border-radius: 13px;
+  background: var(--toast-tint, var(--brand-tint));
+  color: var(--toast-accent, var(--brand-accent)) !important;
+  fill: var(--toast-accent, var(--brand-accent)) !important;
+  flex: none;
+}
+
+.Vue-Toastification__close-button {
+  position: absolute; top: 8px; right: 10px;
+  color: var(--brand-border) !important;
+  opacity: 1 !important;
+  font-size: 1rem;
+  transition: color 0.2s;
+}
+.Vue-Toastification__close-button:hover { color: var(--gray-700) !important; }
+
+.Vue-Toastification__progress-bar {
+  height: 3px !important;
+  background: var(--toast-accent, var(--brand-accent)) !important;
+  opacity: 0.35;
+}
+
+/* Per-type palettes — muted, to sit beside the rose brand rather than shout. */
+.Vue-Toastification__toast--success { --toast-accent: var(--brand-accent); --toast-tint: var(--brand-tint-strong); }
+.Vue-Toastification__toast--error   { --toast-accent: var(--brand-accent-deep); --toast-tint: var(--brand-tint-strong); }
+.Vue-Toastification__toast--warning { --toast-accent: var(--gold-500); --toast-tint: var(--gold-100); }
+.Vue-Toastification__toast--info    { --toast-accent: var(--brand-accent); --toast-tint: var(--brand-tint); }
+.Vue-Toastification__toast--default { --toast-accent: var(--brand-accent); --toast-tint: var(--brand-tint); }
+
+/* Phones: full width at the top, clear of the notch. */
+@media (max-width: 600px) {
+  .Vue-Toastification__container { padding: 16px; max-width: 100vw; width: 100vw; }
+  .Vue-Toastification__toast {
+    width: 100% !important;
+    border-radius: 16px !important;
+    padding: 18px 18px !important;
+    font-size: 0.85rem !important;
+  }
+  .Vue-Toastification__icon { width: 38px !important; height: 38px !important; }
+}
+
+/* ============ MOBILE ============
+   One place for the phone-sized rules every page shares, so individual
+   components only need to handle what is genuinely specific to them. */
+
+/* Never let a wide child force the whole page to scroll sideways. */
+html, body { overflow-x: hidden; }
+body { -webkit-text-size-adjust: 100%; }
+
+/* iOS zooms the page when a focused input's text is under 16px. */
+@media (max-width: 768px) {
+  .form-input, input, select, textarea { font-size: 16px; }
+}
+
+@media (max-width: 768px) {
+  .card-body { padding: 18px 16px; }
+  .card { border-radius: 16px; }
+
+  /* Comfortable thumb targets without the desktop padding. */
+  .btn { padding: 12px 20px; font-size: 0.9rem; min-height: 44px; }
+  .btn-sm { padding: 9px 15px; font-size: 0.82rem; min-height: 38px; }
+  .btn-lg { padding: 14px 26px; font-size: 0.98rem; }
+
+  /* A row of buttons wraps instead of overflowing. */
+  .btn-row { display: flex; flex-wrap: wrap; gap: 10px; }
+  .btn-row > .btn { flex: 1 1 auto; }
+
+  .grid { gap: 14px; }
+
+  .stat-card { padding: 16px 12px; border-radius: 16px; }
+  .stat-value { font-size: 1.5rem; }
+  .stat-label { font-size: 0.68rem; letter-spacing: 0.04em; }
+
+  /* Stats stay in a 2-up grid rather than one tall column. */
+  .dash-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+  /* Tables scroll on their own, with momentum, and hint that they can. */
+  .table-wrapper { -webkit-overflow-scrolling: touch; }
+  /* Free-text cells (guest wishes, names) get a hard ceiling so one long
+     message can't widen the table and push the page sideways. */
+  td { max-width: 60vw; overflow-wrap: anywhere; }
+  th { padding: 11px 14px; font-size: 0.68rem; white-space: nowrap; }
+  td { padding: 12px 14px; font-size: 0.84rem; }
+
+  .form-group { margin-bottom: 16px; }
+
+  h1 { font-size: clamp(1.5rem, 6vw, 2rem); }
+  h2 { font-size: clamp(1.2rem, 5vw, 1.5rem); }
+}
+
+@media (max-width: 420px) {
+  .dash-stats { gap: 10px; }
+  .stat-value { font-size: 1.3rem; }
+  .card-body { padding: 16px 14px; }
+}
+
+/* Long links and emails shouldn't widen the layout. */
+.break-anywhere { overflow-wrap: anywhere; word-break: break-word; }
+
+/* Respect the home indicator / notch on full-bleed pages. */
+.safe-bottom { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+
+@media (hover: none) {
+  /* Hover lifts stick on touch devices — drop them there. */
+  .btn:hover, .card:hover { transform: none; }
+}

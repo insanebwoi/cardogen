@@ -44,7 +44,35 @@
       <p>Responses will appear here once guests RSVP to wedding invitations.</p>
     </div>
     <div v-else>
-      <div class="table-wrapper">
+      <!-- Cards on phones: seven columns cannot fit a small screen. -->
+      <div class="rsvp-cards">
+        <article v-for="r in paginatedRsvps" :key="r.id" class="rsvp-card">
+          <div class="rc-top">
+            <strong class="rc-name">{{ r.guestName }}</strong>
+            <span :class="r.attending ? 'badge badge-success' : 'badge badge-danger'">
+              <Icon :name="r.attending ? 'CheckCircle2' : 'XCircle'" size="13" />
+              {{ r.attending ? 'Attending' : 'Declined' }}
+            </span>
+          </div>
+
+          <span class="badge badge-info rc-inv">{{ getInvLabel(r.invitationId) }}</span>
+
+          <div class="rc-meta">
+            <span><Icon name="Users" size="13" /> {{ r.guestCount || 1 }} guest{{ (r.guestCount || 1) > 1 ? 's' : '' }}</span>
+            <span v-if="r.guestPhone"><Icon name="Phone" size="13" /> {{ r.guestPhone }}</span>
+            <span><Icon name="Calendar" size="13" /> {{ formatTs(r.respondedAt) }}</span>
+          </div>
+
+          <p
+            v-if="r.wishesMessage"
+            class="rc-wish"
+            :class="{ expanded: expanded.has(r.id) }"
+            @click="toggleWish(r.id)"
+          >“{{ r.wishesMessage }}”</p>
+        </article>
+      </div>
+
+      <div class="table-wrapper rsvp-table">
         <table>
           <thead>
             <tr>
@@ -106,6 +134,14 @@ const filterStatus = ref('all')
 const filterInvitation = ref('all')
 const page = ref(1)
 const pageSize = 20
+
+// Long wishes are clamped in the card list; tapping one opens it in place.
+const expanded = ref(new Set())
+function toggleWish(id) {
+  const next = new Set(expanded.value)
+  next.has(id) ? next.delete(id) : next.add(id)
+  expanded.value = next
+}
 
 // Reset page when filters change
 watch([filterStatus, filterInvitation], () => { page.value = 1 })
@@ -203,8 +239,41 @@ function formatTs(ts) {
 }
 .page-info { font-size: 0.8rem; color: var(--gray-500); font-weight: 600; }
 
+/* ---- Card list (phones) ---- */
+.rsvp-cards { display: none; flex-direction: column; gap: 12px; }
+.rsvp-table { display: block; }
+
+.rsvp-card {
+  border: 1px solid var(--gray-100); border-radius: 14px;
+  padding: 14px; background: white; box-shadow: var(--shadow-sm);
+}
+.rc-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.rc-name { font-size: 0.95rem; color: var(--gray-800); overflow-wrap: anywhere; }
+.rc-inv { margin-top: 10px; max-width: 100%; overflow-wrap: anywhere; }
+.rc-meta {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px;
+  font-size: 0.76rem; color: var(--gray-500);
+}
+.rc-meta span { display: inline-flex; align-items: center; gap: 5px; }
+.rc-wish {
+  margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--gray-100);
+  font-size: 0.84rem; color: var(--gray-600); font-style: italic; line-height: 1.55;
+  overflow-wrap: anywhere; cursor: pointer;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.rc-wish.expanded { display: block; overflow: visible; }
+
+@media (max-width: 768px) {
+  /* No table on phones — every response is a card. */
+  .rsvp-cards { display: flex; }
+  .rsvp-table { display: none; }
+}
+
 @media (max-width: 600px) {
   .rsvp-summary { grid-template-columns: repeat(2, 1fr); }
   .filter-select { min-width: 100px; }
+  .wishes-cell { max-width: 130px; }
+  .pagination { flex-wrap: wrap; justify-content: center; gap: 10px; }
+  .page-info { font-size: 0.78rem; }
 }
 </style>

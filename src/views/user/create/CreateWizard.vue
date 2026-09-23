@@ -26,6 +26,7 @@ import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useInvitationStore } from '@/stores/invitationStore'
 import { useAuthStore } from '@/stores/authStore'
+import { useMusicStore } from '@/stores/musicStore'
 import StepIndicator from '@/components/common/StepIndicator.vue'
 import StepNames from './StepNames.vue'
 import StepDateTime from './StepDateTime.vue'
@@ -33,27 +34,31 @@ import StepVenue from './StepVenue.vue'
 import StepMessage from './StepMessage.vue'
 import StepTemplate from './StepTemplate.vue'
 import StepSlug from './StepSlug.vue'
+import StepMusic from './StepMusic.vue'
 import StepPreview from './StepPreview.vue'
 
 const router = useRouter()
 const toast = useToast()
 const invitationStore = useInvitationStore()
 const authStore = useAuthStore()
+const musicStore = useMusicStore()
 const currentStep = ref(0)
 const submitting = ref(false)
 
 const steps = [
   { label: 'Names', icon: 'Heart' }, { label: 'Date', icon: 'Calendar' },
   { label: 'Venue', icon: 'MapPin' }, { label: 'Message', icon: 'Mail' },
-  { label: 'Template', icon: 'Palette' }, { label: 'Link', icon: 'Link' },
-  { label: 'Preview', icon: 'Eye' }
+  { label: 'Template', icon: 'Palette' }, { label: 'Music', icon: 'Music' },
+  { label: 'Link', icon: 'Link' }, { label: 'Preview', icon: 'Eye' }
 ]
-const stepComponents = [StepNames, StepDateTime, StepVenue, StepMessage, StepTemplate, StepSlug, StepPreview]
+const stepComponents = [StepNames, StepDateTime, StepVenue, StepMessage, StepTemplate, StepMusic, StepSlug, StepPreview]
 
 const formData = ref({
   brideName: '', groomName: '', weddingDate: '', weddingTime: '',
   venueName: '', venueAddress: '', venueMapUrl: '', customMessage: '', templateId: null,
-  customSlug: '', customSlugValid: true
+  customSlug: '', customSlugValid: true,
+  musicEnabled: false, musicUrl: '', musicName: '', musicArtist: '', musicSongId: '',
+  musicStart: 0, musicEnd: 0, musicLoop: true
 })
 
 const isStepValid = computed(() => {
@@ -64,8 +69,9 @@ const isStepValid = computed(() => {
     case 2: return d.venueName.trim()
     case 3: return true
     case 4: return d.templateId !== null
-    case 5: return d.customSlugValid !== false // slug step: valid if empty or availability confirmed
-    case 6: return d.customSlugValid !== false // preview step: also checks slug
+    case 5: return !d.musicEnabled || !!d.musicUrl // music step: pick a song once enabled
+    case 6: return d.customSlugValid !== false // slug step: valid if empty or availability confirmed
+    case 7: return d.customSlugValid !== false // preview step: also checks slug
     default: return false
   }
 })
@@ -77,6 +83,9 @@ async function handleSubmit() {
   try {
     submitting.value = true
     const inv = await invitationStore.createInvitation(formData.value, authStore.user.uid)
+    if (formData.value.musicEnabled && formData.value.musicSongId) {
+      musicStore.incrementUse(formData.value.musicSongId)
+    }
     toast.success('🎉 Invitation created!')
     router.push({ name: 'InvitationDetails', params: { id: inv.id } })
   } catch (err) { toast.error('Failed: ' + err.message) }
@@ -89,5 +98,13 @@ async function handleSubmit() {
 .wizard-title { font-family: var(--font-display); font-size: 1.8rem; text-align: center; color: var(--gray-900); }
 .wizard-subtitle { text-align: center; color: var(--gray-500); font-size: 0.9rem; margin: 8px 0 32px; }
 .wizard-card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 36px; margin-top: 36px; }
-.wizard-nav { display: flex; justify-content: space-between; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--gray-100); }
+.wizard-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--gray-100); }
+
+@media (max-width: 600px) {
+  .wizard-title { font-size: 1.3rem; }
+  .wizard-subtitle { margin: 6px 0 22px; font-size: 0.84rem; }
+  .wizard-card { padding: 20px 16px; margin-top: 24px; border-radius: 16px; }
+  .wizard-nav { margin-top: 24px; padding-top: 18px; }
+  .wizard-nav .btn { flex: 1; }
+}
 </style>

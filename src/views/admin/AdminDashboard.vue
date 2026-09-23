@@ -128,7 +128,24 @@
               <tr v-for="inv in recentInvitations" :key="inv.id">
                 <td><strong>{{ inv.brideName }} & {{ inv.groomName }}</strong></td>
                 <td>{{ inv.weddingDate || '—' }}</td>
-                <td><span class="badge badge-info">{{ getTemplateName(inv.templateId) }}</span></td>
+                <td>
+                  <div class="tpl-picker" :class="{ busy: savingId === inv.id }">
+                    <span class="tpl-dot" :class="`dot-${themeOf(inv.templateId)}`"></span>
+                    <select
+                      class="tpl-select"
+                      :value="inv.templateId"
+                      :disabled="savingId === inv.id"
+                      @change="changeTemplate(inv, $event.target.value)"
+                      title="Change this card's theme"
+                    >
+                      <option v-for="(label, id) in templateNames" :key="id" :value="id">{{ label }}</option>
+                      <option v-if="!templateNames[inv.templateId]" :value="inv.templateId">
+                        {{ inv.templateId || 'Unknown' }}
+                      </option>
+                    </select>
+                    <Icon :name="savingId === inv.id ? 'Loader' : 'ChevronDown'" size="13" class="tpl-caret" />
+                  </div>
+                </td>
                 <td>
                   <span :class="inv.isActive ? 'badge badge-success' : 'badge badge-danger'">
                     {{ inv.isActive ? 'Active' : 'Inactive' }}
@@ -147,14 +164,17 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useToast } from 'vue-toastification'
 import { collection, getDocs } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 import { useRsvpStore } from '@/stores/rsvpStore'
 import { useInvitationStore } from '@/stores/invitationStore'
 import { storeToRefs } from 'pinia'
 
+const toast = useToast()
 const rsvpStore = useRsvpStore()
 const invitationStore = useInvitationStore()
+const savingId = ref(null)
 const { allRsvps } = storeToRefs(rsvpStore)
 
 const totalInvitations = ref(0)
@@ -180,7 +200,8 @@ const templateNames = {
   'floral-dream': 'Floral Dream',
   'minimal-white': 'Minimal White',
   'traditional-classic': 'Traditional Classic',
-  'modern-love': 'Modern Love'
+  'modern-love': 'Modern Love',
+  'ios-glass': 'iOS Glass'
 }
 
 onMounted(async () => {
@@ -227,6 +248,34 @@ function getInvitationLabel(invId) {
 
 function getTemplateName(id) {
   return templateNames[id] || id || '—'
+}
+
+const TEMPLATE_THEME = {
+  'royal-gold': 'gold',
+  'floral-dream': 'pink',
+  'minimal-white': 'minimal',
+  'traditional-classic': 'green',
+  'modern-love': 'purple',
+  'ios-glass': 'glass'
+}
+function themeOf(templateId) { return TEMPLATE_THEME[templateId] || 'pink' }
+
+/** These rows are fetched locally, so update the row as well as the store. */
+async function changeTemplate(inv, templateId) {
+  if (!templateId || templateId === inv.templateId) return
+  const previous = inv.templateId
+  try {
+    savingId.value = inv.id
+    await invitationStore.updateTemplate(inv.id, templateId)
+    inv.templateId = templateId
+    if (invitationsMap.value[inv.id]) invitationsMap.value[inv.id].templateId = templateId
+    toast.success(`Theme changed to ${getTemplateName(templateId)}`)
+  } catch (err) {
+    inv.templateId = previous
+    toast.error('Could not change the theme: ' + err.message)
+  } finally {
+    savingId.value = null
+  }
 }
 
 function formatTimestamp(ts) {
@@ -362,4 +411,27 @@ function formatTimestamp(ts) {
 @media (max-width: 500px) {
   .dash-stats { grid-template-columns: 1fr; }
 }
+
+/* Theme picker */
+.tpl-picker {
+  position: relative; display: inline-flex; align-items: center; gap: 7px;
+  padding: 4px 26px 4px 9px;
+  border: 1.5px solid var(--gray-200); border-radius: 99px;
+  background: white; transition: border-color 0.2s;
+}
+.tpl-picker:hover { border-color: var(--rose-300); }
+.tpl-picker.busy { opacity: 0.55; pointer-events: none; }
+.tpl-select {
+  border: none; background: transparent; outline: none;
+  font-size: 0.78rem; font-weight: 600; color: var(--gray-700);
+  cursor: pointer; appearance: none; padding-right: 2px;
+}
+.tpl-caret { position: absolute; right: 9px; color: var(--gray-400); pointer-events: none; }
+.tpl-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; box-shadow: 0 0 0 2px rgba(0,0,0,0.04); }
+.dot-gold { background: linear-gradient(135deg, #d4af37, #8b6914); }
+.dot-pink { background: linear-gradient(135deg, #f9a8d4, #ec4899); }
+.dot-minimal { background: linear-gradient(135deg, #e7e5e4, #44403c); }
+.dot-green { background: linear-gradient(135deg, #10b981, #047857); }
+.dot-purple { background: linear-gradient(135deg, #a855f7, #6d28d9); }
+.dot-glass { background: linear-gradient(135deg, #a5c8ff, #e5b8ff 55%, #ffc2d1); }
 </style>
