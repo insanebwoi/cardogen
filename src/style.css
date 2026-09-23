@@ -336,6 +336,10 @@ tr:hover td { background: var(--gray-50); }
   /* Both axes in one transform: translateY alone would drop the library's
      own translateX(-50%) and shift the toast off-centre horizontally. */
   transform: translate(-50%, -50%) !important;
+  /* The library ships margin-left: -300px on .top-center to centre its own
+     fixed-width container; with our auto width that just drags it leftwards. */
+  margin-left: 0 !important;
+  margin-right: 0 !important;
   align-items: center;
   justify-content: center;
 }
